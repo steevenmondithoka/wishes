@@ -26,6 +26,36 @@ const HER_IMAGE     = herImg;
 const playlist      = [music, music2, music3, music4];
 const AUTO_SCROLL_INTERVAL = 4500;
 
+/* ── First met date (for "Days Together" counter) ── */
+const FIRST_MET_DATE = "2022-10-12"; // ← change this to actual date
+
+/* ── Promises to show in the jar ── */
+const PROMISES = [
+  "Nenu eppudu nee side lo untanu 💜",
+  "Nuvvu dull ga unte — naaku cheppali, naanu listen chestanu",
+  "Nee navvu protect cheyadam naaku promise ♥",
+  "Nee madhi minchi matter cheyyadhu — nenu always here",
+  "Manam kalustaamu... okkaroju ✨",
+];
+
+/* ── Star wishes ── */
+const STAR_WISH_PROMPTS = [
+  "Oka kోrikunda cheppu... 🌠",
+  "Edo oka kోరిక koru ma...",
+  "Edo oka dream... naake cheppu 🌟",
+];
+
+/* ── Constellation star positions for "BANGARAM" ── */
+const CONSTELLATION_STARS = [
+  {x:60,  y:120, label:"M"},
+  {x:110, y:80,  label:"A"},
+  {x:170, y:130, label:"N"},
+  {x:230, y:70,  label:"A"},
+  {x:290, y:110, label:"S"},
+  {x:350, y:60,  label:"A"},
+ 
+];
+
 const MEMORY_IMAGES = [
   { src: img1,  cap: "Okka nee navvu chalu ♥" },
   { src: img2,  cap: "The best day 🌸" },
@@ -39,7 +69,6 @@ const MEMORY_IMAGES = [
   { src: img10, cap: "Us, always ♥" },
 ];
 
-// WhatsApp chat messages — feel free to edit these!
 const CHAT_MESSAGES = [
   { from: "her", text: "Ma... emaina chesav aa? 👀",           delay: 400  },
   { from: "her", text: "Ento chala happy ga unna today 🥺",        delay: 1400 },
@@ -50,7 +79,6 @@ const CHAT_MESSAGES = [
   { from: "me",  text: "Idi choodhu 👇",                           delay: 7800 },
 ];
 
-// Love letter lines
 const LOVE_LETTER_LINES = [
   "Maa,",
   "",
@@ -71,7 +99,6 @@ const LOVE_LETTER_LINES = [
   `— ${SENDER_NAME}`,
 ];
 
-// Dynamic final scene endings based on "Yes / No" answer
 const ENDINGS = {
   yes: {
     headline: `Always Yours, ${HER_NAME} ♥`,
@@ -89,17 +116,22 @@ const SCENES = [
   { type: "msg",      text: "Surprise enti anukuntunnava 🙂",                  hold: 1200 },
   { type: "msg",      text: "Neeku Telusu ga ma... ♥",                         hold: 2800 },
   { type: "card" },
-  { type: "chat" },                          // 💬 WhatsApp chat scene
+  { type: "together" },                      // 🗓️ Days Together counter
+  { type: "chat" },
   { type: "msg",      text: "Konni rojulu dull and confused ga unnav...",      hold: 3000 },
   { type: "msg",      text: "Dont worry! 🙂",                                  hold: 2800 },
   { type: "msg",      text: "Eppudu Navvuthu Undu... 🙂",                      hold: 2800 },
   { type: "msg",      text: "O ma... niku oka vishayam chepdham anukuntunna", hold: 3200 },
   { type: "big",      lines: ["I Love You", `${HER_NAME} ♥`],                 hold: 3800 },
-  { type: "letter" },                        // 💌 Love letter scroll
+  { type: "letter" },
+  { type: "constellation" },                 // ✨ Constellation scene
   { type: "msg",      text: `Nuv na life lo oka special part ${HER_NAME} ♥`, hold: 3200 },
+  { type: "star" },                          // 🌠 Shooting star wish
   { type: "ask" },
   { type: "memories" },
-  { type: "letters",  word: "SOMETHING SPECIAL IS COMING",                    hold: 3200 },
+  { type: "jar" },                           // 🫙 Promise jar                    // 🎙️ Voice note scene
+  { type: "polaroid" },                      // 📸 Polaroid wall
+  { type: "letters",  word: "SOMETHING SPECIAL IS COMING", hold: 3200 },
   { type: "final" },
 ];
 
@@ -115,6 +147,16 @@ function getTimeLeft(dateStr) {
     seconds: Math.floor((d%60000)/1000),
     isToday: Math.floor(d/86400000)===0 && Math.floor((d%86400000)/3600000)===0,
   };
+}
+
+function getDaysTogether(dateStr) {
+  const start = new Date(dateStr);
+  const now   = new Date();
+  const diff  = now - start;
+  const days  = Math.floor(diff / 86400000);
+  const hrs   = Math.floor((diff % 86400000) / 3600000);
+  const mins  = Math.floor((diff % 3600000)  / 60000);
+  return { days, hrs, mins };
 }
 
 function useTyping(text, active, speed=50) {
@@ -176,18 +218,15 @@ function FireworksCanvas({active}){
     window.addEventListener("resize",()=>{W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;});
     const particles=[];
     const launch=()=>{
-      const x=Math.random()*W*.8+W*.1;
-      const y=Math.random()*H*.5+H*.1;
-      const hue=Math.random()*60+260; // purple-pink range
+      const x=Math.random()*W*.8+W*.1,y=Math.random()*H*.5+H*.1;
+      const hue=Math.random()*60+260;
       for(let i=0;i<60;i++){
-        const angle=Math.random()*Math.PI*2;
-        const speed=Math.random()*4+1;
-        particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
-          life:1,col:`hsl(${hue},90%,65%)`,r:Math.random()*3+1});
+        const angle=Math.random()*Math.PI*2,speed=Math.random()*4+1;
+        particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:1,col:`hsl(${hue},90%,65%)`,r:Math.random()*3+1});
       }
     };
     let raf;
-    const ids=[setTimeout(launch,200),setTimeout(launch,700),setTimeout(launch,1300),setTimeout(launch,2000),setTimeout(launch,2600)];
+    const ids=[200,700,1300,2000,2600].map(d=>setTimeout(launch,d));
     const draw=()=>{
       ctx.fillStyle="rgba(3,0,10,0.18)";ctx.fillRect(0,0,W,H);
       for(let i=particles.length-1;i>=0;i--){
@@ -262,6 +301,43 @@ function PurpleBurst(){
   );
 }
 
+/* ── Petal rain canvas (new) ──────────────────── */
+function PetalRain({active}){
+  const ref=useRef();
+  useEffect(()=>{
+    if(!active)return;
+    const cv=ref.current,ctx=cv.getContext("2d");
+    let W=cv.width=window.innerWidth,H=cv.height=window.innerHeight;
+    window.addEventListener("resize",()=>{W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;});
+    const petals=Array.from({length:55},()=>({
+      x:Math.random()*W,y:-Math.random()*H,
+      vx:(Math.random()-.5)*.8,vy:Math.random()*.9+.4,
+      rot:Math.random()*Math.PI*2,rotV:(Math.random()-.5)*.04,
+      size:Math.random()*12+6,
+      col:["#D4A0FF","#9B30FF","#BF5FFF","#E0BFFF","#fff"][Math.floor(Math.random()*5)],
+      sway:Math.random()*2+1,swayT:Math.random()*Math.PI*2,
+    }));
+    let raf;
+    const draw=()=>{
+      ctx.clearRect(0,0,W,H);
+      petals.forEach(p=>{
+        p.swayT+=.02;p.x+=p.vx+Math.sin(p.swayT)*p.sway*.3;
+        p.y+=p.vy;p.rot+=p.rotV;
+        if(p.y>H+20){p.y=-20;p.x=Math.random()*W;}
+        ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.globalAlpha=0.55;
+        ctx.fillStyle=p.col;
+        ctx.beginPath();
+        ctx.ellipse(0,0,p.size*.5,p.size,0,0,Math.PI*2);
+        ctx.fill();ctx.restore();
+      });
+      ctx.globalAlpha=1;raf=requestAnimationFrame(draw);
+    };
+    draw();
+    return()=>cancelAnimationFrame(raf);
+  },[active]);
+  return <canvas ref={ref} style={{position:"fixed",inset:0,zIndex:2,pointerEvents:"none"}}/>;
+}
+
 /* ══════════════════════════════════════════════
    COUNTDOWN SCREEN
 ══════════════════════════════════════════════ */
@@ -324,6 +400,633 @@ function CountdownScreen({onStart}){
 }
 
 /* ══════════════════════════════════════════════
+   🗓️ DAYS TOGETHER SCENE (new)
+══════════════════════════════════════════════ */
+function TogetherScene({onDone}){
+  const [step,setStep]=useState(0);
+  const [live,setLive]=useState(()=>getDaysTogether(FIRST_MET_DATE));
+  const [showBtn,setShowBtn]=useState(false);
+
+  useEffect(()=>{
+    const t1=setTimeout(()=>setStep(1),400);
+    const t2=setTimeout(()=>setStep(2),1200);
+    const t3=setTimeout(()=>setStep(3),2200);
+    const t4=setTimeout(()=>setShowBtn(true),3400);
+    const id=setInterval(()=>setLive(getDaysTogether(FIRST_MET_DATE)),1000);
+    return()=>{[t1,t2,t3,t4].forEach(clearTimeout);clearInterval(id);};
+  },[]);
+
+  const fade=(n)=>({
+    opacity:step>=n?1:0,
+    transform:step>=n?"translateY(0)":"translateY(20px)",
+    transition:"opacity 0.8s ease,transform 0.8s ease",
+  });
+
+  return(
+    <div style={{textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:20,width:"100%"}}>
+      <div style={fade(1)}>
+        <p style={{color:"rgba(155,48,255,0.6)",fontSize:10,letterSpacing:"0.3em",textTransform:"uppercase",marginBottom:8}}>
+          from that day to today
+        </p>
+        <p style={{fontSize:"clamp(14px,3.5vw,18px)",fontWeight:200,color:"rgba(255,255,255,0.55)",
+          fontFamily:"'Georgia',serif",letterSpacing:"0.04em"}}>
+          Nuvvu naa life lo enter ayi...
+        </p>
+      </div>
+
+      <div style={{...fade(2),display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,width:"min(340px,90vw)"}}>
+        {[["days",live.days,"rojulu"],["hours",live.hrs,"gantalu"],["mins",live.mins,"nimishalu"]].map(([k,v,sub])=>(
+          <div key={k} style={{
+            background:"rgba(155,48,255,0.07)",border:"1px solid rgba(155,48,255,0.25)",
+            borderRadius:18,padding:"18px 8px 14px",position:"relative",overflow:"hidden",
+          }}>
+            <div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 50% 0%,rgba(155,48,255,0.1),transparent 70%)"}}/>
+            <div style={{fontSize:"clamp(26px,6vw,38px)",fontWeight:200,color:"#BF5FFF",
+              fontFamily:"'Georgia',serif",textShadow:"0 0 18px rgba(155,48,255,0.7)",lineHeight:1}}>
+              {String(v).padStart(String(v).length<4?3:4,"0")}
+            </div>
+            <div style={{fontSize:9,letterSpacing:"0.18em",textTransform:"uppercase",color:"rgba(255,255,255,0.28)",marginTop:8}}>{sub}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={fade(3)}>
+        <p style={{fontSize:"clamp(16px,4vw,22px)",fontWeight:200,color:"rgba(255,255,255,0.85)",
+          fontFamily:"'Georgia',serif",letterSpacing:"0.04em",lineHeight:1.8}}>
+          ...annitu naatho unnav ♥
+        </p>
+        <p style={{color:"rgba(155,48,255,0.4)",fontSize:11,marginTop:8,letterSpacing:"0.1em"}}>live · updating every second</p>
+      </div>
+
+      {showBtn&&<SlimBtn onClick={onDone} label="Continue →" extraStyle={{animation:"fadeUp .5s ease"}}/>}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   🌠 SHOOTING STAR WISH SCENE (new)
+══════════════════════════════════════════════ */
+function StarScene({onDone}){
+  const [phase,setPhase]=useState("prompt"); // prompt | shooting | wish | done
+  const [wishText,setWishText]=useState("");
+  const [wished,setWished]=useState(false);
+  const [starPos,setStarPos]=useState({x:-60,y:60});
+  const [trail,setTrail]=useState([]);
+  const [grantedMsg,setGrantedMsg]=useState("");
+  const prompt=STAR_WISH_PROMPTS[Math.floor(Math.random()*STAR_WISH_PROMPTS.length)];
+
+  const shootStar=useCallback(()=>{
+    setPhase("shooting");
+    const totalMs=2200;
+    const start=performance.now();
+    const frames=()=>{
+      const pct=Math.min((performance.now()-start)/totalMs,1);
+      const x=-60+(window.innerWidth+120)*pct;
+      const y=60+pct*60;
+      setStarPos({x,y});
+      setTrail(Array.from({length:12},(_,i)=>({
+        x:x-(i+1)*22,y:y-(i+1)*5,
+        op:1-(i/12),
+      })));
+      if(pct<1) requestAnimationFrame(frames);
+      else { setTrail([]);setPhase("wish"); }
+    };
+    requestAnimationFrame(frames);
+  },[]);
+
+  useEffect(()=>{setTimeout(shootStar,800);},[]);
+
+  const makeWish=()=>{
+    if(!wishText.trim())return;
+    setWished(true);
+    const msgs=["Nee korika telusu naaku ♥","Poyi teestha naaku nuvvivvu","Edo chestha nee kosam 💜","Star vinindi ma 🌟"];
+    setGrantedMsg(msgs[Math.floor(Math.random()*msgs.length)]);
+    setTimeout(()=>setPhase("done"),2000);
+  };
+
+  return(
+    <div style={{textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:20,width:"100%",position:"relative"}}>
+      {/* star + trail */}
+      {phase==="shooting"&&(
+        <div style={{position:"fixed",inset:0,zIndex:8,pointerEvents:"none"}}>
+          {trail.map((t,i)=>(
+            <div key={i} style={{position:"absolute",left:t.x,top:t.y,
+              width:4,height:4,borderRadius:"50%",background:"#BF5FFF",
+              opacity:t.op,boxShadow:"0 0 8px #BF5FFF",transform:"translate(-50%,-50%)"}}/>
+          ))}
+          <div style={{position:"absolute",left:starPos.x,top:starPos.y,
+            fontSize:22,transform:"translate(-50%,-50%)",filter:"drop-shadow(0 0 14px #BF5FFF)",
+            zIndex:9}}>✦</div>
+        </div>
+      )}
+
+      {phase==="prompt"&&(
+        <div style={{opacity:0,animation:"fadeUp 0.6s ease forwards"}}>
+          <div style={{fontSize:38,animation:"floatY 3s ease-in-out infinite",marginBottom:12,
+            filter:"drop-shadow(0 0 18px rgba(155,48,255,0.8))"}}>🌠</div>
+          <p style={{color:"rgba(255,255,255,0.35)",fontSize:13,letterSpacing:"0.12em",fontFamily:"'Georgia',serif"}}>
+            Oka shooting star vasthundi...
+          </p>
+        </div>
+      )}
+
+      {phase==="wish"&&!wished&&(
+        <div style={{animation:"fadeUp 0.6s ease",width:"min(340px,90vw)"}}>
+          <div style={{fontSize:30,marginBottom:14,filter:"drop-shadow(0 0 14px rgba(155,48,255,0.7))"}}>🌟</div>
+          <p style={{color:"rgba(255,255,255,0.8)",fontSize:"clamp(15px,4vw,20px)",
+            fontFamily:"'Georgia',serif",fontWeight:200,lineHeight:1.8,marginBottom:22}}>{prompt}</p>
+          <textarea
+            autoFocus
+            value={wishText}
+            onChange={e=>setWishText(e.target.value)}
+            placeholder="Ikkade type chey... (naaku matrame telusu)"
+            maxLength={120}
+            style={{
+              width:"100%",background:"rgba(155,48,255,0.07)",
+              border:"1px solid rgba(155,48,255,0.35)",borderRadius:16,
+              color:"rgba(255,255,255,0.85)",fontSize:14,fontFamily:"'Georgia',serif",
+              padding:"14px 16px",resize:"none",height:80,outline:"none",
+              letterSpacing:"0.04em",lineHeight:1.7,
+            }}
+          />
+          <button onClick={makeWish} style={{
+            marginTop:14,background:"rgba(155,48,255,0.15)",
+            border:"1px solid rgba(155,48,255,0.5)",
+            color:"#BF5FFF",fontSize:14,fontWeight:300,padding:"12px 40px",
+            borderRadius:100,cursor:"pointer",fontFamily:"'Georgia',serif",letterSpacing:"0.1em",
+            animation:"glowPulse 2.5s ease-in-out infinite",transition:"all .25s ease"}}
+            onMouseEnter={e=>{e.currentTarget.style.background="rgba(155,48,255,0.28)";}}
+            onMouseLeave={e=>{e.currentTarget.style.background="rgba(155,48,255,0.15)";}}
+          >Wish Chey 🌠</button>
+        </div>
+      )}
+
+      {wished&&(
+        <div style={{animation:"fadeUp 0.5s ease",textAlign:"center"}}>
+          <div style={{fontSize:40,marginBottom:12,animation:"heartBeat 1.4s ease-in-out infinite",
+            filter:"drop-shadow(0 0 18px rgba(155,48,255,0.8))"}}>✨</div>
+          <p style={{fontSize:"clamp(16px,4vw,22px)",fontWeight:200,color:"rgba(255,255,255,0.9)",
+            fontFamily:"'Georgia',serif",lineHeight:1.8}}>{grantedMsg}</p>
+          <p style={{color:"rgba(155,48,255,0.5)",fontSize:12,marginTop:10,letterSpacing:"0.1em"}}>
+            Nee wish safe ga unnadi ma 💜
+          </p>
+        </div>
+      )}
+
+      {phase==="done"&&<SlimBtn onClick={onDone} label="Continue →" extraStyle={{animation:"fadeUp .5s ease"}}/>}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   ✨ CONSTELLATION SCENE (new)
+══════════════════════════════════════════════ */
+function ConstellationScene({onDone}){
+  const [visStars,setVisStars]=useState([]);
+  const [visLines,setVisLines]=useState([]);
+  const [visLabels,setVisLabels]=useState([]);
+  const [title,setTitle]=useState(false);
+  const [showBtn,setShowBtn]=useState(false);
+  const W=520, H=220;
+
+  useEffect(()=>{
+    let timers=[];
+    CONSTELLATION_STARS.forEach((_,i)=>{
+      timers.push(setTimeout(()=>setVisStars(v=>[...v,i]),400+i*280));
+      if(i<CONSTELLATION_STARS.length-1)
+        timers.push(setTimeout(()=>setVisLines(v=>[...v,i]),400+i*280+180));
+      timers.push(setTimeout(()=>setVisLabels(v=>[...v,i]),400+i*280+260));
+    });
+    timers.push(setTimeout(()=>setTitle(true),400+CONSTELLATION_STARS.length*280+200));
+    timers.push(setTimeout(()=>setShowBtn(true),400+CONSTELLATION_STARS.length*280+1400));
+    return()=>timers.forEach(clearTimeout);
+  },[]);
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:16,width:"100%"}}>
+      <p style={{
+        color:"rgba(155,48,255,0.55)",fontSize:9,letterSpacing:"0.3em",textTransform:"uppercase",
+        opacity:title?1:0,transition:"opacity 0.8s ease",
+      }}>your name in the stars</p>
+
+      <div style={{width:"min(520px,96vw)",overflowX:"auto",scrollbarWidth:"none"}}>
+        <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H}
+          style={{display:"block",minWidth:W,maxWidth:"100%"}}>
+          {/* starfield background dots */}
+          {Array.from({length:40},(_,i)=>(
+            <circle key={`bg${i}`}
+              cx={(i*137.5)%W} cy={(i*97.3)%H}
+              r={Math.random()<.3?.8:.4}
+              fill="rgba(255,255,255,0.15)"
+            />
+          ))}
+
+          {/* connecting lines */}
+          {CONSTELLATION_STARS.map((s,i)=>{
+            if(i===CONSTELLATION_STARS.length-1)return null;
+            const next=CONSTELLATION_STARS[i+1];
+            return(
+              <line key={`line${i}`}
+                x1={s.x} y1={s.y} x2={next.x} y2={next.y}
+                stroke="rgba(155,48,255,0.45)" strokeWidth={1}
+                strokeDasharray="4 4"
+                opacity={visLines.includes(i)?1:0}
+                style={{transition:"opacity 0.4s ease"}}
+              />
+            );
+          })}
+
+          {/* stars */}
+          {CONSTELLATION_STARS.map((s,i)=>(
+            <g key={`star${i}`}>
+              {visStars.includes(i)&&(
+                <>
+                  <circle cx={s.x} cy={s.y} r={14}
+                    fill="rgba(155,48,255,0.06)"
+                    style={{animation:`starPulse 2.5s ${i*.2}s ease-in-out infinite`}}/>
+                  <circle cx={s.x} cy={s.y} r={5}
+                    fill="#9B30FF"
+                    style={{filter:"drop-shadow(0 0 8px rgba(155,48,255,0.9))",
+                      animation:`starPulse 2.5s ${i*.2}s ease-in-out infinite`}}/>
+                  <circle cx={s.x} cy={s.y} r={2.5} fill="#E0BFFF"/>
+                </>
+              )}
+              {visLabels.includes(i)&&(
+                <text x={s.x} y={s.y+26} textAnchor="middle"
+                  fill="rgba(191,95,255,0.75)"
+                  fontSize={11} fontFamily="Georgia,serif" letterSpacing={1}>
+                  {s.label}
+                </text>
+              )}
+            </g>
+          ))}
+        </svg>
+      </div>
+
+      <p style={{
+        fontSize:"clamp(14px,3.5vw,18px)",color:"rgba(255,255,255,0.55)",
+        fontFamily:"'Georgia',serif",fontWeight:200,letterSpacing:"0.1em",
+        opacity:title?1:0,transform:title?"translateY(0)":"translateY(12px)",
+        transition:"opacity 0.8s ease,transform 0.8s ease",textAlign:"center",
+      }}>
+        Nee peru stars lo unte chaalu — forever ✨
+      </p>
+
+      {showBtn&&<SlimBtn onClick={onDone} label="Continue →" extraStyle={{animation:"fadeUp .5s ease"}}/>}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   🫙 PROMISE JAR SCENE (new)
+══════════════════════════════════════════════ */
+function JarScene({ onDone }) {
+  const [open, setOpen] = useState(false);
+  const [promiseIdx, setPromiseIdx] = useState(null);
+  const [revealed, setRevealed] = useState([]);
+  const [done, setDone] = useState(false);
+  const [jarGlow, setJarGlow] = useState(false);
+
+  // 🎯 Pull random promise
+  const pullPromise = () => {
+    if (revealed.length >= PROMISES.length) return;
+
+    const remaining = PROMISES.map((_, i) => i).filter(
+      (i) => !revealed.includes(i)
+    );
+
+    const next = remaining[Math.floor(Math.random() * remaining.length)];
+
+    setJarGlow(true);
+    setTimeout(() => setJarGlow(false), 800);
+
+    setPromiseIdx(next);
+    setRevealed((prev) => [...prev, next]);
+
+    // Mark done when last one is picked
+    if (revealed.length === PROMISES.length - 1) {
+      setDone(true);
+    }
+  };
+
+  // 🎬 Open animation
+  useEffect(() => {
+    setTimeout(() => setOpen(true), 300);
+  }, []);
+
+  // 🚀 Auto move to next scene after all promises
+  useEffect(() => {
+    if (revealed.length === PROMISES.length) {
+      setTimeout(() => {
+        onDone();
+      }, 2000);
+    }
+  }, [revealed, onDone]);
+
+  const allDone = revealed.length >= PROMISES.length;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 18,
+        textAlign: "center",
+      }}
+    >
+      <p
+        style={{
+          color: "rgba(155,48,255,0.55)",
+          fontSize: 9,
+          letterSpacing: "0.3em",
+          textTransform: "uppercase",
+          marginBottom: 4,
+        }}
+      >
+        promise jar
+      </p>
+
+      {/* 🫙 Jar */}
+      <div
+        onClick={!allDone ? pullPromise : undefined}
+        style={{
+          cursor: allDone ? "default" : "pointer",
+          position: "relative",
+          userSelect: "none",
+          opacity: open ? 1 : 0,
+          transform: open ? "scale(1)" : "scale(0.7)",
+          transition:
+            "opacity 0.7s ease,transform 0.7s cubic-bezier(.16,1,.3,1)",
+        }}
+      >
+        {/* Glow */}
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%,-50%)",
+            width: 110,
+            height: 130,
+            borderRadius: "50%",
+            boxShadow: `0 0 ${
+              jarGlow ? 80 : 30
+            }px rgba(155,48,255,${jarGlow ? 0.5 : 0.15})`,
+            transition: "box-shadow .4s ease",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* SVG Jar */}
+        <svg width={90} height={110} viewBox="0 0 90 110">
+          {/* Lid */}
+          <rect
+            x={20}
+            y={4}
+            width={50}
+            height={14}
+            rx={6}
+            fill={
+              allDone
+                ? "rgba(155,48,255,0.2)"
+                : "rgba(155,48,255,0.35)"
+            }
+            stroke="rgba(155,48,255,0.6)"
+            strokeWidth={1}
+          />
+
+          {/* Body */}
+          <rect
+            x={12}
+            y={16}
+            width={66}
+            height={80}
+            rx={14}
+            fill="rgba(155,48,255,0.06)"
+            stroke="rgba(155,48,255,0.4)"
+            strokeWidth={1.2}
+          />
+
+          {/* Shimmer */}
+          <rect
+            x={18}
+            y={22}
+            width={12}
+            height={60}
+            rx={6}
+            fill="rgba(255,255,255,0.04)"
+          />
+
+          {/* Floating hearts */}
+          {Array.from({ length: 6 }, (_, i) => (
+            <text
+              key={i}
+              x={22 + i * 10}
+              y={50 + (i % 2) * 18}
+              fontSize={10}
+              fill="rgba(155,48,255,0.5)"
+              style={{
+                animation: `floatY ${1.8 + i * 0.3}s ${
+                  i * 0.25
+                }s ease-in-out infinite`,
+              }}
+            >
+              ♥
+            </text>
+          ))}
+
+          {/* Count badge */}
+          <circle cx={68} cy={24} r={12} fill="#9B30FF" />
+          <text
+            x={68}
+            y={28.5}
+            textAnchor="middle"
+            fontSize={11}
+            fontFamily="Georgia,serif"
+            fill="#fff"
+          >
+            {PROMISES.length - revealed.length}
+          </text>
+        </svg>
+
+        {!allDone && (
+          <p
+            style={{
+              color: "rgba(155,48,255,0.5)",
+              fontSize: 10,
+              letterSpacing: "0.1em",
+              marginTop: 4,
+            }}
+          >
+            tap to pull a promise ♥
+          </p>
+        )}
+      </div>
+
+      {/* 💌 Promise Card */}
+      {promiseIdx !== null && (
+        <div
+          key={promiseIdx}
+          style={{
+            width: "min(320px,88vw)",
+            background: "rgba(155,48,255,0.07)",
+            border: "1px solid rgba(155,48,255,0.3)",
+            borderRadius: 20,
+            padding: "20px 22px",
+            animation: "fadeUp 0.5s ease",
+            boxShadow: "0 0 40px rgba(155,48,255,0.12)",
+          }}
+        >
+          <p
+            style={{
+              fontSize: "clamp(14px,3.5vw,17px)",
+              color: "rgba(255,255,255,0.88)",
+              fontFamily: "'Georgia',serif",
+              fontWeight: 200,
+              lineHeight: 1.8,
+              letterSpacing: "0.04em",
+              textShadow: "0 0 14px rgba(155,48,255,0.3)",
+            }}
+          >
+            {PROMISES[promiseIdx]}
+          </p>
+        </div>
+      )}
+
+      {/* Progress dots */}
+      {revealed.length > 0 && (
+        <div style={{ display: "flex", gap: 6 }}>
+          {PROMISES.map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: revealed.includes(i)
+                  ? "#9B30FF"
+                  : "rgba(255,255,255,0.1)",
+                boxShadow: revealed.includes(i)
+                  ? "0 0 8px rgba(155,48,255,0.7)"
+                  : "none",
+                transition: "all .3s ease",
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* ✅ Final */}
+      {done && (
+        <div style={{ animation: "fadeUp 0.5s ease", textAlign: "center" }}>
+          <p
+            style={{
+              color: "rgba(255,255,255,0.6)",
+              fontSize: 14,
+              fontFamily: "'Georgia',serif",
+              fontWeight: 200,
+              lineHeight: 1.8,
+              marginBottom: 16,
+            }}
+          >
+            Anni promises choodav? 🫙<br />
+            <span
+              style={{
+                color: "rgba(155,48,255,0.6)",
+                fontSize: 12,
+              }}
+            >
+              Every one real ma ♥
+            </span>
+          </p>
+
+          <SlimBtn
+            onClick={() => onDone()}
+            label="Continue →"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   🎙️ VOICE NOTE SCENE (new)
+══════════════════════════════════════════════ */
+
+
+/* ══════════════════════════════════════════════
+   📸 POLAROID WALL SCENE (new)
+══════════════════════════════════════════════ */
+function PolaroidScene({onDone}){
+  const [shown,setShown]=useState([]);
+  const [showBtn,setShowBtn]=useState(false);
+
+  // Use first 6 images as polaroids
+  const POLS=MEMORY_IMAGES.slice(0,6);
+  const ROTS=[-4,3,-2,5,-3,2];
+  const CAPTIONS=["Day 1 ♥","Best memory","Always ✨","Us 🌸","Happy times","Forever 💜"];
+
+  useEffect(()=>{
+    POLS.forEach((_,i)=>{
+      setTimeout(()=>setShown(v=>[...v,i]),600+i*550);
+    });
+    setTimeout(()=>setShowBtn(true),600+POLS.length*550+800);
+  },[]);
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:18,width:"100%"}}>
+      <p style={{color:"rgba(155,48,255,0.55)",fontSize:9,letterSpacing:"0.3em",textTransform:"uppercase"}}>
+        our wall ♥
+      </p>
+
+      <div style={{
+        display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,
+        width:"min(360px,92vw)",
+      }}>
+        {POLS.map((img,i)=>(
+          <div key={i} style={{
+            background:"rgba(255,255,255,0.04)",
+            border:"1px solid rgba(255,255,255,0.06)",
+            borderRadius:4,
+            padding:"6px 6px 22px",
+            transform:shown.includes(i)?`rotate(${ROTS[i]}deg)`:`rotate(${ROTS[i]}deg) scale(0.5) translateY(30px)`,
+            opacity:shown.includes(i)?1:0,
+            transition:`opacity 0.6s ease,transform 0.6s cubic-bezier(.16,1,.3,1)`,
+            boxShadow:shown.includes(i)?"0 8px 30px rgba(0,0,0,0.6),0 0 20px rgba(155,48,255,0.1)":"none",
+            cursor:"pointer",
+            animation:shown.includes(i)?`polaroidShake 0.4s ease`:"none",
+          }}
+            onMouseEnter={e=>{e.currentTarget.style.transform=`rotate(0deg) scale(1.08)`;e.currentTarget.style.zIndex=10;e.currentTarget.style.position="relative";}}
+            onMouseLeave={e=>{e.currentTarget.style.transform=`rotate(${ROTS[i]}deg)`;e.currentTarget.style.zIndex=0;}}
+          >
+            <img src={img.src} alt="" style={{
+              width:"100%",aspectRatio:"1",objectFit:"cover",
+              display:"block",
+              filter:"brightness(0.8) saturate(1.1)",
+              borderRadius:2,
+            }}/>
+            <p style={{
+              color:"rgba(255,255,255,0.55)",fontSize:9,textAlign:"center",
+              marginTop:6,fontFamily:"'Georgia',serif",letterSpacing:"0.04em",
+            }}>{CAPTIONS[i]}</p>
+          </div>
+        ))}
+      </div>
+
+      <p style={{color:"rgba(155,48,255,0.35)",fontSize:11,letterSpacing:"0.1em",
+        fontFamily:"'Georgia',serif",opacity:shown.length===POLS.length?1:0,
+        transition:"opacity 0.8s ease",textAlign:"center"}}>
+        hover chey ma — zoom ayyindi 🌸
+      </p>
+
+      {showBtn&&<SlimBtn onClick={onDone} label="Continue →" extraStyle={{animation:"fadeUp .5s ease"}}/>}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
    MSG SCENE
 ══════════════════════════════════════════════ */
 function MsgScene({scene,onDone}){
@@ -343,7 +1046,7 @@ function MsgScene({scene,onDone}){
 }
 
 /* ══════════════════════════════════════════════
-   💬 WHATSAPP CHAT SCENE
+   WHATSAPP CHAT SCENE
 ══════════════════════════════════════════════ */
 function ChatScene({onDone}){
   const [visible,setVisible]=useState([]);
@@ -354,14 +1057,11 @@ function ChatScene({onDone}){
   useEffect(()=>{
     let timers=[];
     CHAT_MESSAGES.forEach((msg,i)=>{
-      // show "typing..." 800ms before message
       timers.push(setTimeout(()=>setTyping(msg.from),msg.delay-600));
       timers.push(setTimeout(()=>{
         setTyping(null);
         setVisible(v=>[...v,i]);
-        setTimeout(()=>{
-          if(scrollRef.current) scrollRef.current.scrollTop=scrollRef.current.scrollHeight;
-        },80);
+        setTimeout(()=>{if(scrollRef.current)scrollRef.current.scrollTop=scrollRef.current.scrollHeight;},80);
       },msg.delay));
     });
     const last=CHAT_MESSAGES[CHAT_MESSAGES.length-1].delay+2200;
@@ -371,14 +1071,12 @@ function ChatScene({onDone}){
 
   return(
     <div style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
-      {/* Phone frame */}
       <div style={{
         width:"min(320px,90vw)",borderRadius:28,overflow:"hidden",
         border:"1px solid rgba(155,48,255,0.3)",
         boxShadow:"0 0 60px rgba(155,48,255,0.2),0 20px 60px rgba(0,0,0,0.6)",
         background:"#0a0010",
       }}>
-        {/* WhatsApp top bar */}
         <div style={{
           background:"linear-gradient(135deg,#1a0030,#2d0050)",
           padding:"12px 16px",
@@ -398,7 +1096,6 @@ function ChatScene({onDone}){
           <div style={{marginLeft:"auto",fontSize:18,opacity:0.4}}>📞</div>
         </div>
 
-        {/* Messages */}
         <div ref={scrollRef} style={{
           height:280,overflowY:"auto",padding:"12px 10px",
           display:"flex",flexDirection:"column",gap:8,
@@ -447,15 +1144,14 @@ function ChatScene({onDone}){
       </div>
 
       {done&&(
-        <SlimBtn onClick={onDone} label="Continue →" color="purple"
-          extraStyle={{animation:"fadeUp .5s ease"}}/>
+        <SlimBtn onClick={onDone} label="Continue →" extraStyle={{animation:"fadeUp .5s ease"}}/>
       )}
     </div>
   );
 }
 
 /* ══════════════════════════════════════════════
-   💌 LOVE LETTER SCROLL SCENE
+   LOVE LETTER SCROLL SCENE
 ══════════════════════════════════════════════ */
 function LetterScene({onDone}){
   const [visLines,setVisLines]=useState([]);
@@ -476,7 +1172,6 @@ function LetterScene({onDone}){
 
   return(
     <div style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:16}}>
-      {/* Envelope header */}
       <div style={{textAlign:"center",marginBottom:4}}>
         <div style={{fontSize:32,animation:"floatY 3s ease-in-out infinite",
           filter:"drop-shadow(0 0 16px rgba(155,48,255,0.7))"}}>💌</div>
@@ -484,7 +1179,6 @@ function LetterScene({onDone}){
           textTransform:"uppercase",marginTop:8}}>a letter for you</p>
       </div>
 
-      {/* Paper */}
       <div ref={scrollRef} style={{
         width:"min(340px,90vw)",maxHeight:340,overflowY:"auto",
         background:"linear-gradient(135deg,rgba(30,5,55,0.95),rgba(20,0,40,0.98))",
@@ -493,7 +1187,6 @@ function LetterScene({onDone}){
         boxShadow:"0 0 60px rgba(155,48,255,0.15),0 20px 60px rgba(0,0,0,0.5)",
         scrollbarWidth:"none",position:"relative",
       }}>
-        {/* decorative corner */}
         <div style={{position:"absolute",top:12,right:14,opacity:.25,fontSize:18}}>✦</div>
         <div style={{position:"absolute",bottom:12,left:14,opacity:.2,fontSize:14}}>✦</div>
 
@@ -513,7 +1206,7 @@ function LetterScene({onDone}){
         ))}
       </div>
 
-      {showBtn&&<SlimBtn onClick={onDone} label="Continue →" color="purple"/>}
+      {showBtn&&<SlimBtn onClick={onDone} label="Continue →"/>}
     </div>
   );
 }
@@ -612,13 +1305,13 @@ function CardScene({onDone}){
             fontFamily:"'Georgia',serif",textShadow:"0 0 20px rgba(155,48,255,0.7)"}}>{HER_NAME} ♥</p>
         </div>
       </div>
-      {showBtn&&<SlimBtn onClick={onDone} label="Continue →" color="purple"/>}
+      {showBtn&&<SlimBtn onClick={onDone} label="Continue →"/>}
     </div>
   );
 }
 
 /* ══════════════════════════════════════════════
-   ASK SCENE — stores answer in global ref
+   ASK SCENE
 ══════════════════════════════════════════════ */
 function AskScene({onYes,onNo}){
   const [step,setStep]=useState(0);
@@ -633,7 +1326,7 @@ function AskScene({onYes,onNo}){
           textTransform:"uppercase",marginBottom:16}}>one question...</p>
         <p style={{fontSize:"clamp(18px,5vw,28px)",fontWeight:200,color:"rgba(255,255,255,0.9)",
           lineHeight:1.8,fontFamily:"'Georgia',serif"}}>
-          Nenu neeku "special" antava? 
+          Nenu neeku "special" antava?
         </p>
       </div>
       {step>=2&&(
@@ -731,13 +1424,11 @@ function MemoriesScene({onDone}){
         </p>
       </div>
       <div style={{width:"min(340px,92vw)",position:"relative",borderRadius:28,overflow:"visible"}}>
-        {/* outer rings */}
         <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",
           width:"min(400px,108vw)",height:"min(520px,135vw)",borderRadius:36,
           border:`1px solid rgba(155,48,255,${glowPeak?.55:.15})`,
           boxShadow:`0 0 ${glowPeak?90:35}px rgba(155,48,255,${glowPeak?.3:.08})`,
           transition:"box-shadow .5s ease,border-color .5s ease",pointerEvents:"none",zIndex:3}}/>
-        {/* photo frame */}
         <div style={{borderRadius:28,overflow:"hidden",position:"relative",
           boxShadow:`0 0 ${glowPeak?130:65}px rgba(155,48,255,${glowPeak?.4:.2}),0 40px 100px rgba(0,0,0,0.75)`,
           transition:"box-shadow .5s ease",border:"1px solid rgba(155,48,255,0.18)"}}>
@@ -755,7 +1446,6 @@ function MemoriesScene({onDone}){
           {transitioning&&<div style={{position:"absolute",inset:0,zIndex:5,
             background:"radial-gradient(circle at 50% 50%,rgba(155,48,255,0.18),transparent 70%)",
             animation:"flashBurst .4s ease forwards"}}/>}
-          {/* bottom controls */}
           <div style={{position:"absolute",bottom:0,left:0,right:0,zIndex:6,
             padding:"80px 16px 18px",
             background:"linear-gradient(transparent,rgba(10,0,20,.55) 30%,rgba(5,0,15,.92) 100%)"}}>
@@ -777,10 +1467,8 @@ function MemoriesScene({onDone}){
               <Btn onClick={handleDownload} label="⬇" size={38} title="Download"/>
             </div>
           </div>
-          {/* top glow */}
           <div style={{position:"absolute",top:0,left:0,right:0,height:80,zIndex:4,
             background:"linear-gradient(rgba(80,10,130,0.25),transparent)",pointerEvents:"none"}}/>
-          {/* corner marks */}
           {[["top","left"],["top","right"],["bottom","left"],["bottom","right"]].map(([v,h],i)=>(
             <div key={i} style={{position:"absolute",[v]:8,[h]:8,width:18,height:18,zIndex:7,pointerEvents:"none",
               borderTop:v==="top"?"1px solid rgba(155,48,255,0.6)":"none",
@@ -790,7 +1478,6 @@ function MemoriesScene({onDone}){
               opacity:glowPeak?1:.4,transition:"opacity .4s ease"}}/>
           ))}
         </div>
-        {/* progress bar */}
         <div style={{marginTop:14,width:"100%",height:3,background:"rgba(155,48,255,0.1)",borderRadius:3}}>
           <div style={{height:"100%",width:`${progress}%`,background:"linear-gradient(90deg,#6A0DAD,#BF5FFF)",
             borderRadius:3,boxShadow:"0 0 10px rgba(155,48,255,0.6)",transition:"width .1s linear"}}/>
@@ -804,12 +1491,13 @@ function MemoriesScene({onDone}){
 }
 
 /* ══════════════════════════════════════════════
-   DYNAMIC FINAL SCENE
+   FINAL SCENE
 ══════════════════════════════════════════════ */
 function FinalScene({answer,onReplay}){
   const [p,setP]=useState(0);
   const [hearts,setHearts]=useState(false);
   const [fireworks,setFireworks]=useState(false);
+  const [petals,setPetals]=useState(false);
   const ending=ENDINGS[answer]||ENDINGS.yes;
 
   useEffect(()=>{
@@ -820,6 +1508,7 @@ function FinalScene({answer,onReplay}){
       setTimeout(()=>setP(4),3100),
       setTimeout(()=>{setP(5);setHearts(true);},4000),
       setTimeout(()=>setFireworks(false),5500),
+      setTimeout(()=>{setPetals(true);},3000),
     ];
     return()=>ts.forEach(clearTimeout);
   },[]);
@@ -833,6 +1522,7 @@ function FinalScene({answer,onReplay}){
     <>
       {fireworks&&<FireworksCanvas active/>}
       {hearts&&<HeartBurst/>}
+      {petals&&<PetalRain active/>}
       <div style={{textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:20,position:"relative",zIndex:5}}>
         <div style={fade(1)}>
           <div style={{fontSize:54,animation:"heartBeat 1.8s ease-in-out infinite",
@@ -857,7 +1547,6 @@ function FinalScene({answer,onReplay}){
         <div style={fade(4)}>
           <p style={{color:"rgba(155,48,255,0.6)",fontSize:13,letterSpacing:"0.16em"}}>— {SENDER_NAME}</p>
         </div>
-        {/* Replay button */}
         {p>=5&&(
           <div style={{...fade(5),marginTop:8}}>
             <button onClick={onReplay} style={{
@@ -865,7 +1554,7 @@ function FinalScene({answer,onReplay}){
               color:"rgba(191,95,255,0.8)",fontSize:13,fontWeight:300,letterSpacing:"0.14em",
               padding:"12px 36px",borderRadius:100,cursor:"pointer",fontFamily:"inherit",
               display:"flex",alignItems:"center",gap:8,transition:"all .25s ease",
-              animation:"fadeUp .5s ease",}}
+              animation:"fadeUp .5s ease"}}
               onMouseEnter={e=>{e.currentTarget.style.background="rgba(155,48,255,0.25)";e.currentTarget.style.transform="scale(1.05)";}}
               onMouseLeave={e=>{e.currentTarget.style.background="rgba(155,48,255,0.12)";e.currentTarget.style.transform="scale(1)";}}
             >↺ Replay from start</button>
@@ -916,27 +1605,21 @@ export default function App(){
   const [sceneIdx,setSceneIdx]= useState(0);
   const [fadeIn,  setFadeIn]  = useState(false);
   const [sceneKey,setSceneKey]= useState(0);
-  const [answer,  setAnswer]  = useState(null); // "yes" | "no"
+  const [answer,  setAnswer]  = useState(null);
   const audioRef   = useRef(null);
   const [songIndex,setSongIndex]=useState(0);
 
-  // Playlist cycling
   useEffect(()=>{
     const audio=audioRef.current; if(!audio)return;
     const onEnd=()=>setSongIndex(p=>(p+1)%playlist.length);
     audio.addEventListener("ended",onEnd);
     return()=>audio.removeEventListener("ended",onEnd);
   },[songIndex]);
+
   useEffect(()=>{
     if(audioRef.current){audioRef.current.pause();audioRef.current.currentTime=0;audioRef.current.play().catch(()=>{});}
   },[songIndex]);
 
-  const goto=(idx)=>{
-    setFadeIn(false);
-    setTimeout(()=>{ setSceneIdx(idx);setSceneKey(k=>k+1);setTimeout(()=>setFadeIn(true),80); },480);
-  };
-  const advance=useCallback(()=>goto(s=>s+1),[]);
-  // advance using functional update
   const advanceFn=useCallback(()=>{
     setFadeIn(false);
     setTimeout(()=>{ setSceneIdx(i=>i+1);setSceneKey(k=>k+1);setTimeout(()=>setFadeIn(true),80); },480);
@@ -949,14 +1632,6 @@ export default function App(){
 
   const handleYes=()=>{ setAnswer("yes"); advanceFn(); };
   const handleNo =()=>{ setAnswer("no");  advanceFn(); };
-
-  const handleNoMemories=()=>{
-    setFadeIn(false);
-    setTimeout(()=>{
-      setSceneIdx(SCENES.findIndex(s=>s.type==="letters"));
-      setSceneKey(k=>k+1);setTimeout(()=>setFadeIn(true),80);
-    },480);
-  };
 
   const handleReplay=()=>{
     setAnswer(null);setSceneIdx(0);setSceneKey(k=>k+1);setFadeIn(false);
@@ -971,14 +1646,12 @@ export default function App(){
       display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
       fontFamily:"'Georgia','Times New Roman',serif",position:"relative",overflow:"hidden"}}>
 
-      {/* Ambient bg */}
       <div style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none",background:`
         radial-gradient(ellipse 80% 60% at 20% 15%,rgba(80,10,130,0.22) 0%,transparent 55%),
         radial-gradient(ellipse 70% 50% at 85% 80%,rgba(60,5,100,0.18) 0%,transparent 50%),
         radial-gradient(ellipse 50% 40% at 50% 50%,rgba(155,48,255,0.04) 0%,transparent 60%)`}}/>
 
       <ParticleCanvas active={phase==="scenes"}/>
-
       <audio ref={audioRef} src={playlist[songIndex]} key={songIndex}/>
 
       {phase==="countdown"&&<CountdownScreen onStart={handleStart}/>}
@@ -1001,18 +1674,24 @@ export default function App(){
           )}
 
           <div key={sceneKey} style={{width:"100%",display:"flex",justifyContent:"center"}}>
-            {scene.type==="msg"      &&<MsgScene      key={sceneKey} scene={scene} onDone={advanceFn}/>}
-            {scene.type==="big"      &&<BigScene      key={sceneKey} scene={scene} onDone={advanceFn}/>}
-            {scene.type==="letters"  &&<LettersScene  key={sceneKey} scene={scene} onDone={advanceFn}/>}
-            {scene.type==="card"     &&<CardScene     key={sceneKey} onDone={advanceFn}/>}
-            {scene.type==="chat"     &&<ChatScene     key={sceneKey} onDone={advanceFn}/>}
-            {scene.type==="letter"   &&<LetterScene   key={sceneKey} onDone={advanceFn}/>}
-            {scene.type==="ask"      &&<AskScene      key={sceneKey} onYes={handleYes} onNo={handleNo}/>}
-            {scene.type==="memories" &&<MemoriesScene key={sceneKey} onDone={advanceFn}/>}
-            {scene.type==="final"    &&<FinalScene    key={sceneKey} answer={answer} onReplay={handleReplay}/>}
+            {scene.type==="msg"         &&<MsgScene          key={sceneKey} scene={scene} onDone={advanceFn}/>}
+            {scene.type==="big"         &&<BigScene          key={sceneKey} scene={scene} onDone={advanceFn}/>}
+            {scene.type==="letters"     &&<LettersScene      key={sceneKey} scene={scene} onDone={advanceFn}/>}
+            {scene.type==="card"        &&<CardScene         key={sceneKey} onDone={advanceFn}/>}
+            {scene.type==="chat"        &&<ChatScene         key={sceneKey} onDone={advanceFn}/>}
+            {scene.type==="letter"      &&<LetterScene       key={sceneKey} onDone={advanceFn}/>}
+            {scene.type==="ask"         &&<AskScene          key={sceneKey} onYes={handleYes} onNo={handleNo}/>}
+            {scene.type==="memories"    &&<MemoriesScene     key={sceneKey} onDone={advanceFn}/>}
+            {scene.type==="final"       &&<FinalScene        key={sceneKey} answer={answer} onReplay={handleReplay}/>}
+            {scene.type==="together"    &&<TogetherScene     key={sceneKey} onDone={advanceFn}/>}
+            {scene.type==="star"        &&<StarScene         key={sceneKey} onDone={advanceFn}/>}
+            {scene.type==="constellation"&&<ConstellationScene key={sceneKey} onDone={advanceFn}/>}
+            {scene.type==="jar"         &&<JarScene          key={sceneKey} onDone={advanceFn}/>}
+            {scene.type==="polaroid"    &&<PolaroidScene     key={sceneKey} onDone={advanceFn}/>}
           </div>
 
-          {!["card","memories","ask","final","chat","letter"].includes(scene?.type)&&(
+          {!["card","memories","ask","final","chat","letter","together","star",
+             "constellation","jar","voicenote","polaroid"].includes(scene?.type)&&(
             <p style={{position:"absolute",bottom:24,left:0,right:0,textAlign:"center",
               color:"rgba(155,48,255,0.1)",fontSize:10,letterSpacing:"0.28em"}}>♥ ♥ ♥</p>
           )}
@@ -1024,22 +1703,25 @@ export default function App(){
         html,body{background:#03000A;overflow:hidden;}
         ::-webkit-scrollbar{display:none;}
 
-        @keyframes fadeUp     {from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
-        @keyframes blink      {0%,100%{opacity:1;}50%{opacity:0;}}
-        @keyframes heartBeat  {0%,100%{transform:scale(1);}14%{transform:scale(1.38);}28%{transform:scale(1);}42%{transform:scale(1.2);}70%{transform:scale(1);}}
-        @keyframes glowPulse  {0%,100%{box-shadow:0 0 0 0 rgba(155,48,255,0.35);}50%{box-shadow:0 0 0 14px rgba(155,48,255,0);}}
-        @keyframes purpleGlow {0%,100%{box-shadow:0 0 0 0 rgba(155,48,255,0.45);}50%{box-shadow:0 0 0 14px rgba(155,48,255,0);}}
-        @keyframes crownFloat {0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-10px) rotate(3deg);}}
-        @keyframes burst      {0%{transform:rotate(var(--a,0deg)) translateX(0);opacity:1;}100%{transform:rotate(var(--a,0deg)) translateX(var(--dist,30vw));opacity:0;}}
-        @keyframes heartBurst {0%{transform:rotate(var(--a,0deg)) translateX(0);opacity:1;}100%{transform:rotate(var(--a,0deg)) translateX(var(--dist,35vw)) scale(0.3);opacity:0;}}
-        @keyframes rayPulse   {0%,100%{opacity:0.3;}50%{opacity:0.85;}}
-        @keyframes slowZoom   {from{transform:scale(1);}to{transform:scale(1.06);}}
-        @keyframes imgFadeOut {from{opacity:1;}to{opacity:0;}}
-        @keyframes flashBurst {0%{opacity:0;}30%{opacity:1;}100%{opacity:0;}}
-        @keyframes captionIn  {from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-        @keyframes msgPop     {from{opacity:0;transform:scale(0.85) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
-        @keyframes typingDot  {0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
-        @keyframes floatY     {0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+        @keyframes fadeUp      {from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+        @keyframes blink       {0%,100%{opacity:1;}50%{opacity:0;}}
+        @keyframes heartBeat   {0%,100%{transform:scale(1);}14%{transform:scale(1.38);}28%{transform:scale(1);}42%{transform:scale(1.2);}70%{transform:scale(1);}}
+        @keyframes glowPulse   {0%,100%{box-shadow:0 0 0 0 rgba(155,48,255,0.35);}50%{box-shadow:0 0 0 14px rgba(155,48,255,0);}}
+        @keyframes purpleGlow  {0%,100%{box-shadow:0 0 0 0 rgba(155,48,255,0.45);}50%{box-shadow:0 0 0 14px rgba(155,48,255,0);}}
+        @keyframes crownFloat  {0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-10px) rotate(3deg);}}
+        @keyframes burst       {0%{transform:rotate(var(--a,0deg)) translateX(0);opacity:1;}100%{transform:rotate(var(--a,0deg)) translateX(var(--dist,30vw));opacity:0;}}
+        @keyframes heartBurst  {0%{transform:rotate(var(--a,0deg)) translateX(0);opacity:1;}100%{transform:rotate(var(--a,0deg)) translateX(var(--dist,35vw)) scale(0.3);opacity:0;}}
+        @keyframes rayPulse    {0%,100%{opacity:0.3;}50%{opacity:0.85;}}
+        @keyframes slowZoom    {from{transform:scale(1);}to{transform:scale(1.06);}}
+        @keyframes imgFadeOut  {from{opacity:1;}to{opacity:0;}}
+        @keyframes flashBurst  {0%{opacity:0;}30%{opacity:1;}100%{opacity:0;}}
+        @keyframes captionIn   {from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+        @keyframes msgPop      {from{opacity:0;transform:scale(0.85) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
+        @keyframes typingDot   {0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+        @keyframes floatY      {0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+        @keyframes starPulse   {0%,100%{r:5;opacity:1;}50%{r:7;opacity:0.7;}}
+        @keyframes barBounce   {from{transform:scaleY(0.7);}to{transform:scaleY(1.3);}}
+        @keyframes polaroidShake {0%{transform:rotate(var(--r,0deg)) scale(0.5);}60%{transform:rotate(var(--r,0deg)) scale(1.06);}100%{transform:rotate(var(--r,0deg)) scale(1);}}
       `}</style>
     </div>
   );
